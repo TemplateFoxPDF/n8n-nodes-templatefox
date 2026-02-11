@@ -1,5 +1,5 @@
 {
-	"name": "n8n-nodes-templatefox",
+	"name": "@templatefox/n8n-nodes",
 	"version": "1.0.0",
 	"description": "n8n community node for TemplateFox - Generate PDFs from templates via API",
 	"keywords": [

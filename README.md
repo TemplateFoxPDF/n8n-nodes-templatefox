@@ -1,4 +1,4 @@
-# n8n-nodes-templatefox
+# @templatefox/n8n-nodes
 
 This is an n8n community node for [TemplateFox](https://pdftemplateapi.com) - a PDF generation API that lets you create professional PDFs from templates.
 
@@ -10,13 +10,13 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 
 **npm:**
 ```bash
-npm install n8n-nodes-templatefox
+npm install @templatefox/n8n-nodes
 ```
 
 **n8n Desktop/Cloud:**
 1. Go to **Settings** > **Community Nodes**
 2. Select **Install**
-3. Enter `n8n-nodes-templatefox`
+3. Enter `@templatefox/n8n-nodes`
 4. Agree to the risks and click **Install**
 
 ## Operations
@@ -85,7 +85,7 @@ The node returns:
 ## Support
 
 - **TemplateFox Support**: support@pdftemplateapi.com
-- **GitHub Issues**: [Report bugs or request features](https://github.com/TemplateFoxPDF/n8n-nodes-templatefox/issues)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/TemplateFoxPDF/@templatefox/n8n-nodes/issues)
 
 ## License
 
