@@ -7,24 +7,25 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: npm
     permissions:
+      id-token: write
       contents: read
-      id-token: write  # Required for OIDC trusted publishing
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v2
         with:
           version: 9
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Update npm to latest (requires >= 11.5.1 for OIDC)
+        run: npm install -g npm@latest && npm --version
 
       - name: Install dependencies
         run: pnpm install
@@ -35,10 +36,8 @@ jobs:
       - name: Update version from release tag
         run: |
           VERSION="${{ github.event.release.tag_name }}"
-          VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+          VERSION="${VERSION#v}"
           npm version "$VERSION" --no-git-tag-version --allow-same-version
 
-      - name: Publish to npm (OIDC)
-        run: npm publish --access public --provenance
-        # No token needed - uses OIDC trusted publishing
-        # Configure at: https://www.npmjs.com/package/n8n-nodes-templatefox/access
+      - name: Publish to npm
+        run: npm publish --access public
