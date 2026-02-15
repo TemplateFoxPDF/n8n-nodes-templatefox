@@ -28,6 +28,7 @@ export class TemplateFox implements INodeType {
 		version: 1,
 		subtitle: '={{$parameter["operation"]}}',
 		description: 'Generate PDFs from templates using TemplateFox API',
+		usableAsTool: true,
 		defaults: {
 			name: 'TemplateFox',
 		},

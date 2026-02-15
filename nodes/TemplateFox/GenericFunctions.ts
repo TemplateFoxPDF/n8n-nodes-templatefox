@@ -2,7 +2,7 @@ import type {
 	IExecuteFunctions,
 	ILoadOptionsFunctions,
 	IHttpRequestMethods,
-	IRequestOptions,
+	IHttpRequestOptions,
 	IDataObject,
 } from 'n8n-workflow';
 
@@ -18,10 +18,9 @@ export async function templateFoxApiRequest(
 	body?: IDataObject,
 	query?: IDataObject,
 ): Promise<any> {
-	const options: IRequestOptions = {
+	const options: IHttpRequestOptions = {
 		method,
 		url: `${API_BASE_URL}${endpoint}`,
-		json: true,
 	};
 
 	if (body) {
@@ -32,7 +31,7 @@ export async function templateFoxApiRequest(
 		options.qs = query;
 	}
 
-	return this.helpers.requestWithAuthentication.call(this, 'templateFoxApi', options);
+	return this.helpers.httpRequestWithAuthentication.call(this, 'templateFoxApi', options);
 }
 
 /**

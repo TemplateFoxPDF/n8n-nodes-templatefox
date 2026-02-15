@@ -41,4 +41,4 @@ jobs:
       - name: Publish to npm (OIDC)
         run: npm publish --access public --provenance
         # No token needed - uses OIDC trusted publishing
-        # Configure at: https://www.npmjs.com/package/@templatefox/n8n-nodes/access
+        # Configure at: https://www.npmjs.com/package/n8n-nodes-templatefox/access
