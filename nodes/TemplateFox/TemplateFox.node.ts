@@ -6,6 +6,8 @@ import type {
 	INodePropertyOptions,
 	INodeType,
 	INodeTypeDescription,
+	ResourceMapperFields,
+	ResourceMapperField,
 } from 'n8n-workflow';
 
 import { templateFoxApiRequest, parseFieldValue } from './GenericFunctions';
@@ -100,121 +102,36 @@ export class TemplateFox implements INodeType {
 					},
 				},
 			},
-			// Dynamic template fields (shown when mode is 'fields')
+			// Dynamic template fields using resourceMapping (shown when mode is 'fields')
 			{
-				displayName: 'Template Data',
-				name: 'templateData',
-				type: 'fixedCollection',
-				typeOptions: {
-					multipleValues: true,
+				displayName: 'Template Fields',
+				name: 'templateFields',
+				type: 'resourceMapper',
+				noDataExpression: true,
+				default: {
+					mappingMode: 'defineBelow',
+					value: null,
 				},
-				default: {},
-				placeholder: 'Add Field',
-				description: 'Data fields for the template. Select a template first to see available fields.',
+				required: true,
+				typeOptions: {
+					loadOptionsDependsOn: ['templateId'],
+					resourceMapper: {
+						resourceMapperMethod: 'getTemplateFieldsMapping',
+						mode: 'add',
+						fieldWords: {
+							singular: 'field',
+							plural: 'fields',
+						},
+						addAllFields: true,
+						multiKeyMatch: false,
+					},
+				},
 				displayOptions: {
 					show: {
 						operation: ['generatePdf'],
 						dataInputMode: ['fields'],
 					},
 				},
-				options: [
-					{
-						displayName: 'Field',
-						name: 'field',
-						values: [
-							{
-								displayName: 'Field Name or ID',
-								name: 'fieldName',
-								type: 'options',
-								typeOptions: {
-									loadOptionsMethod: 'getTemplateFields',
-									loadOptionsDependsOn: ['templateId'],
-								},
-								default: '',
-								description:
-									'The field name from the template. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
-							},
-							{
-								displayName: 'Value',
-								name: 'fieldValue',
-								type: 'string',
-								default: '',
-								description:
-									'The value for this field. For arrays, enter valid JSON (e.g., [{"name": "Item 1", "qty": 2}]).',
-							},
-						],
-					},
-				],
-			},
-			// Array Items section for line items (shown when mode is 'fields')
-			{
-				displayName: 'Array Items',
-				name: 'arrayItems',
-				type: 'fixedCollection',
-				typeOptions: {
-					multipleValues: true,
-				},
-				default: {},
-				placeholder: 'Add Array Item',
-				description: 'Add items for array fields (like line items). Each item becomes an object in the array.',
-				displayOptions: {
-					show: {
-						operation: ['generatePdf'],
-						dataInputMode: ['fields'],
-					},
-				},
-				options: [
-					{
-						displayName: 'Item',
-						name: 'item',
-						values: [
-							{
-								displayName: 'Array Field Name or ID',
-								name: 'arrayFieldName',
-								type: 'options',
-								typeOptions: {
-									loadOptionsMethod: 'getArrayFields',
-									loadOptionsDependsOn: ['templateId'],
-								},
-								default: '',
-								description:
-									'The array field to add this item to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
-							},
-							{
-								displayName: 'Item Properties',
-								name: 'itemProperties',
-								type: 'fixedCollection',
-								typeOptions: {
-									multipleValues: true,
-								},
-								default: {},
-								placeholder: 'Add Property',
-								options: [
-									{
-										displayName: 'Property',
-										name: 'property',
-										values: [
-											{
-												displayName: 'Property Name',
-												name: 'propertyName',
-												type: 'string',
-												default: '',
-												description: 'The property name (e.g., "description", "quantity", "price")',
-											},
-											{
-												displayName: 'Property Value',
-												name: 'propertyValue',
-												type: 'string',
-												default: '',
-												description: 'The property value',
-											},
-										],
-									},
-								],
-							},
-						],
-					},
-				],
 			},
 			// JSON payload (shown when mode is 'json')
 			{
@@ -286,83 +203,73 @@ export class TemplateFox implements INodeType {
 					value: template.id,
 				}));
 			},
+		},
 
+		resourceMapping: {
 			/**
-			 * Fetch template fields for dynamic field selection
+			 * Fetch template fields for dynamic resource mapping
 			 */
-			async getTemplateFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-				const templateId = this.getCurrentNodeParameter('templateId') as string;
+			async getTemplateFieldsMapping(
+				this: ILoadOptionsFunctions,
+			): Promise<ResourceMapperFields> {
+				const templateId = this.getNodeParameter('templateId', 0) as string;
 
 				if (!templateId) {
-					return [];
+					return { fields: [] };
 				}
 
-				const response = await templateFoxApiRequest.call(
-					this,
-					'GET',
-					`/v1/templates/${templateId}/fields`,
-				);
+				try {
+					const response = await templateFoxApiRequest.call(
+						this,
+						'GET',
+						`/v1/templates/${templateId}/fields`,
+					);
 
-				if (!Array.isArray(response)) {
-					return [];
-				}
-
-				return response.map((field: TemplateField) => {
-					let description = `Type: ${field.type}`;
-
-					// For array fields, show the expected structure
-					if (field.type === 'array' && field.spec) {
-						const specArray = Array.isArray(field.spec) ? field.spec : [field.spec];
-						const specFields = specArray.map((s) => `${s.name}: ${s.type}`).join(', ');
-						description = `Array of objects with: {${specFields}}. Enter as JSON array.`;
+					if (!Array.isArray(response)) {
+						return { fields: [] };
 					}
 
-					return {
-						name: `${field.label} (${field.type})`,
-						value: field.key,
-						description,
-					};
-				});
-			},
+					const fields: ResourceMapperField[] = response.map((field: TemplateField) => {
+						// Map API field type to n8n field type
+						let fieldType: 'string' | 'number' | 'boolean' | 'array' | 'object' | 'dateTime' | 'time' | 'options' = 'string';
+						if (field.type === 'number' || field.type === 'integer') {
+							fieldType = 'number';
+						} else if (field.type === 'boolean') {
+							fieldType = 'boolean';
+						} else if (field.type === 'array') {
+							fieldType = 'string'; // Arrays will be entered as JSON strings
+						} else if (field.type === 'object') {
+							fieldType = 'string'; // Objects will be entered as JSON strings
+						}
 
-			/**
-			 * Fetch only array fields for the Array Items section
-			 */
-			async getArrayFields(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-				const templateId = this.getCurrentNodeParameter('templateId') as string;
+						// Build description with type info
+						let description = `Type: ${field.type}`;
+						if (field.type === 'array' && field.spec) {
+							const specArray = Array.isArray(field.spec) ? field.spec : [field.spec];
+							const specFields = specArray.map((s) => s.name).join(', ');
+							description = `Array with properties: ${specFields}. Enter as JSON array.`;
+						}
+						if (field.helpText) {
+							description = field.helpText;
+						}
 
-				if (!templateId) {
-					return [];
+						return {
+							id: field.key,
+							displayName: field.label || field.key,
+							required: field.required || false,
+							defaultMatch: false,
+							canBeUsedToMatch: false,
+							display: true,
+							type: fieldType,
+							removed: false,
+						} as ResourceMapperField;
+					});
+
+					return { fields };
+				} catch (error) {
+					// Return empty fields if API call fails
+					return { fields: [] };
 				}
-
-				const response = await templateFoxApiRequest.call(
-					this,
-					'GET',
-					`/v1/templates/${templateId}/fields`,
-				);
-
-				if (!Array.isArray(response)) {
-					return [];
-				}
-
-				// Filter to only array fields
-				const arrayFields = response.filter((field: TemplateField) => field.type === 'array');
-
-				return arrayFields.map((field: TemplateField) => {
-					let description = 'Array field';
-
-					if (field.spec) {
-						const specArray = Array.isArray(field.spec) ? field.spec : [field.spec];
-						const specFields = specArray.map((s) => s.name).join(', ');
-						description = `Properties: ${specFields}`;
-					}
-
-					return {
-						name: field.label,
-						value: field.key,
-						description,
-					};
-				});
 			},
 		},
 	};
@@ -396,50 +303,16 @@ export class TemplateFox implements INodeType {
 							);
 						}
 					} else {
-						// Fields mode - collect simple fields
-						const templateData = this.getNodeParameter('templateData', i, {}) as {
-							field?: Array<{ fieldName: string; fieldValue: string }>;
+						// Fields mode - get data from resource mapper
+						const templateFields = this.getNodeParameter('templateFields', i) as {
+							mappingMode: string;
+							value: Record<string, unknown> | null;
 						};
 
-						if (templateData.field) {
-							for (const field of templateData.field) {
-								if (field.fieldName) {
-									data[field.fieldName] = parseFieldValue(field.fieldValue);
-								}
-							}
-						}
-
-						// Collect array items
-						const arrayItems = this.getNodeParameter('arrayItems', i, {}) as {
-							item?: Array<{
-								arrayFieldName: string;
-								itemProperties: {
-									property?: Array<{ propertyName: string; propertyValue: string }>;
-								};
-							}>;
-						};
-
-						if (arrayItems.item) {
-							for (const item of arrayItems.item) {
-								if (item.arrayFieldName) {
-									// Initialize array if not exists
-									if (!data[item.arrayFieldName]) {
-										data[item.arrayFieldName] = [];
-									}
-
-									// Build item object from properties
-									const itemObj: Record<string, unknown> = {};
-									if (item.itemProperties?.property) {
-										for (const prop of item.itemProperties.property) {
-											if (prop.propertyName) {
-												itemObj[prop.propertyName] = parseFieldValue(prop.propertyValue);
-											}
-										}
-									}
-
-									// Add to array
-									(data[item.arrayFieldName] as unknown[]).push(itemObj);
-								}
+						if (templateFields?.value) {
+							// Process each field value
+							for (const [key, value] of Object.entries(templateFields.value)) {
+								data[key] = parseFieldValue(value);
 							}
 						}
 					}
