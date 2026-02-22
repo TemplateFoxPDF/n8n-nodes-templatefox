@@ -263,6 +263,7 @@ export class TemplateFox implements INodeType {
 							display: true,
 							type: fieldType,
 							removed: false,
+							description,
 						} as ResourceMapperField;
 					});
 
