@@ -9,6 +9,7 @@ import type {
 	ResourceMapperFields,
 	ResourceMapperField,
 } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 
 import { templateFoxApiRequest, parseFieldValue } from './GenericFunctions';
 
@@ -298,7 +299,8 @@ export class TemplateFox implements INodeType {
 						try {
 							data = JSON.parse(jsonData);
 						} catch {
-							throw new Error(
+							throw new NodeOperationError(
+								this.getNode(),
 								`Invalid JSON data at item ${i}: Please check your JSON syntax.`,
 							);
 						}
