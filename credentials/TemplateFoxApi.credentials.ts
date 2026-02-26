@@ -18,7 +18,7 @@ export class TemplateFoxApi implements ICredentialType {
 			default: '',
 			required: true,
 			description:
-				'Your TemplateFox API key. Get it from [your dashboard](https://pdftemplateapi.com/dashboard/api).',
+				'Your TemplateFox API key. Get it from <a href="https://pdftemplateapi.com/dashboard/api" target="_blank">your dashboard</a>.',
 		},
 	];
 
