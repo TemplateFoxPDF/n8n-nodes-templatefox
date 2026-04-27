@@ -1,7 +1,7 @@
 {
 	"name": "n8n-nodes-templatefox",
-	"version": "1.1.5",
-	"description": "n8n community node for TemplateFox - Generate PDFs from templates via API",
+	"version": "1.2.0",
+	"description": "n8n community node for TemplateFox - Generate PDFs from templates and manipulate PDFs via API",
 	"keywords": [
 		"n8n-community-node-package",
 		"pdf",
@@ -11,10 +11,10 @@
 		"templatefox"
 	],
 	"license": "MIT",
-	"homepage": "https://pdftemplateapi.com",
+	"homepage": "https://templatefox.com",
 	"author": {
 		"name": "TemplateFox",
-		"email": "support@pdftemplateapi.com"
+		"email": "support@templatefox.com"
 	},
 	"repository": {
 		"type": "git",

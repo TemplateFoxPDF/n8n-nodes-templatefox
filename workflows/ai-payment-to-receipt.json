@@ -1,0 +1,296 @@
+{
+  "name": "Send receipt PDFs for Stripe payments using AI and TemplateFox",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Send receipt PDFs for Stripe payments using AI and TemplateFox\n\nAutomatically generate and email receipt PDFs when a Stripe payment succeeds. An AI Agent categorizes the payment and extracts customer details, then TemplateFox generates a professional receipt PDF.\n\n### Who is this for?\nSaaS companies, e-commerce stores, and service providers who want automated receipt generation for every Stripe payment.\n\n### How it works\n1. Stripe Trigger fires on successful charges\n2. AI Agent categorizes the payment (subscription, one-time, donation) and extracts customer details\n3. Code node parses the AI response into structured receipt data\n4. TemplateFox generates a professional receipt PDF\n5. Receipt is emailed to the customer\n\n### How to set up (~5 min)\n1. Install the **TemplateFox** community node from Settings \u2192 Community Nodes\n2. Add your **Stripe**, **OpenAI**, **TemplateFox API** credentials\n3. Select your receipt template in the TemplateFox node dropdown\n4. Update the sender email address in the Send Receipt Email node\n\n### Requirements\n- TemplateFox API key \u2014 [get one free at app.templatefox.com](https://app.templatefox.com)\n- OpenAI API key\n- Stripe account with webhook access\n- Gmail account with OAuth2\n\n**Note:** This template uses the [TemplateFox community node](https://www.npmjs.com/package/n8n-nodes-templatefox). Install it from Settings \u2192 Community Nodes.",
+        "color": 3
+      },
+      "id": "b2c3d4e5-2222-4000-a000-000000000101",
+      "name": "Template Description",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -280,
+        -420
+      ],
+      "parameters_height": 580,
+      "parameters_width": 480
+    },
+    {
+      "parameters": {
+        "content": "### 1. Stripe Trigger\nFires on every successful charge. Customize the event type if needed.",
+        "color": 0
+      },
+      "id": "b2c3d4e5-2222-4000-a000-000000000102",
+      "name": "Step 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -160
+      ],
+      "parameters_height": 100,
+      "parameters_width": 200
+    },
+    {
+      "parameters": {
+        "content": "### 2. AI Categorization\nAI reads the Stripe charge data and extracts receipt fields + payment category.",
+        "color": 0
+      },
+      "id": "b2c3d4e5-2222-4000-a000-000000000103",
+      "name": "Step 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        200,
+        -160
+      ],
+      "parameters_height": 100,
+      "parameters_width": 220
+    },
+    {
+      "parameters": {
+        "content": "### 3. Parse Data\nParses the AI JSON response into structured receipt data.",
+        "color": 0
+      },
+      "id": "b2c3d4e5-2222-4000-a000-000000000104",
+      "name": "Step 3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        420,
+        -160
+      ],
+      "parameters_height": 100,
+      "parameters_width": 200
+    },
+    {
+      "parameters": {
+        "content": "### 4. Generate PDF\nTemplateFox generates the receipt PDF. Select your template in the dropdown.",
+        "color": 0
+      },
+      "id": "b2c3d4e5-2222-4000-a000-000000000105",
+      "name": "Step 4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -160
+      ],
+      "parameters_height": 100,
+      "parameters_width": 200
+    },
+    {
+      "parameters": {
+        "content": "### 5. Send Receipt\nEmails the receipt PDF link to the customer. Update the sender email.",
+        "color": 0
+      },
+      "id": "b2c3d4e5-2222-4000-a000-000000000106",
+      "name": "Step 5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        860,
+        -160
+      ],
+      "parameters_height": 100,
+      "parameters_width": 200
+    },
+    {
+      "parameters": {
+        "events": [
+          "charge.succeeded"
+        ],
+        "options": {}
+      },
+      "id": "b2c3d4e5-2222-4000-a000-000000000001",
+      "name": "Stripe Trigger",
+      "type": "n8n-nodes-base.stripeTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "",
+      "credentials": {
+        "stripeApi": {
+          "name": "Stripe Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "b2c3d4e5-2222-4000-a000-000000000002",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "text": "={{ JSON.stringify($json) }}",
+        "options": {
+          "systemMessage": "You are a payment categorization assistant. Analyze the Stripe charge data and return a JSON object with:\n\n- receipt_number: generate as REC-YYYY-XXXX\n- date: payment date in YYYY-MM-DD format\n- customer_name: from charge customer info or metadata\n- customer_email: from charge receipt_email or customer email\n- amount: formatted amount (e.g. \"49.99\")\n- currency: currency symbol ($ for usd, etc.)\n- payment_method: card brand + last 4 (e.g. \"Visa ending in 4242\")\n- description: charge description or product name\n- category: one of \"subscription\", \"one-time\", \"donation\", \"service\"\n- items: array with [{description, quantity: 1, unit_price}]\n\nRespond with ONLY the JSON, no explanation."
+        }
+      },
+      "id": "b2c3d4e5-2222-4000-a000-000000000003",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        220
+      ],
+      "credentials": {
+        "openAiApi": {
+          "name": "OpenAI Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiOutput = $input.first().json.output || $input.first().json.text;\n\nlet receiptData;\ntry {\n  const jsonMatch = aiOutput.match(/```(?:json)?\\s*([\\s\\S]*?)```/) || [null, aiOutput];\n  receiptData = JSON.parse(jsonMatch[1].trim());\n} catch (e) {\n  throw new Error(`Failed to parse AI response: ${e.message}`);\n}\n\nreturn [{ json: receiptData }];"
+      },
+      "id": "b2c3d4e5-2222-4000-a000-000000000004",
+      "name": "Parse Receipt Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "generatePdf",
+        "templateId": "",
+        "dataInputMode": "json",
+        "jsonData": "={{ JSON.stringify($json) }}",
+        "options": {
+          "filename": "={{ 'receipt-' + $json.receipt_number }}"
+        }
+      },
+      "id": "b2c3d4e5-2222-4000-a000-000000000005",
+      "name": "TemplateFox - Generate Receipt",
+      "type": "n8n-nodes-templatefox.templateFox",
+      "typeVersion": 1,
+      "position": [
+        660,
+        0
+      ],
+      "credentials": {
+        "templateFoxApi": {
+          "name": "TemplateFox API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Parse Receipt Data').item.json.customer_email }}",
+        "subject": "=Payment Receipt {{ $('Parse Receipt Data').item.json.receipt_number }}",
+        "message": "=<p>Hi {{ $('Parse Receipt Data').item.json.customer_name }},</p>\n<p>Thank you for your payment of {{ $('Parse Receipt Data').item.json.currency }}{{ $('Parse Receipt Data').item.json.amount }}.</p>\n<p><strong>Receipt #:</strong> {{ $('Parse Receipt Data').item.json.receipt_number }}<br>\n<strong>Date:</strong> {{ $('Parse Receipt Data').item.json.date }}<br>\n<strong>Payment Method:</strong> {{ $('Parse Receipt Data').item.json.payment_method }}</p>\n<p><a href=\"{{ $json.url }}\">Download Receipt PDF</a></p>\n<p>Thank you for your business!</p>",
+        "options": {}
+      },
+      "id": "b2c3d4e5-2222-4000-a000-000000000006",
+      "name": "Send Receipt Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        0
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "name": "Gmail Account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Stripe Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Receipt Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Receipt Data": {
+      "main": [
+        [
+          {
+            "node": "TemplateFox - Generate Receipt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TemplateFox - Generate Receipt": {
+      "main": [
+        [
+          {
+            "node": "Send Receipt Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "AI"
+    },
+    {
+      "name": "PDF"
+    },
+    {
+      "name": "Stripe"
+    },
+    {
+      "name": "Receipt"
+    }
+  ],
+  "triggerCount": 1,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": ""
+  }
+}

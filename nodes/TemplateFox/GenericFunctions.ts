@@ -6,7 +6,7 @@ import type {
 	IDataObject,
 } from 'n8n-workflow';
 
-const API_BASE_URL = 'https://api.pdftemplateapi.com';
+const API_BASE_URL = 'https://api.templatefox.com';
 
 /**
  * Make an authenticated API request to TemplateFox

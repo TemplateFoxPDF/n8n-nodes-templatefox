@@ -1,0 +1,277 @@
+{
+  "name": "Generate packing slip and shipping label PDFs from orders with TemplateFox",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Generate packing slip and shipping label PDFs from orders with TemplateFox\n\nReceive order data via webhook and generate both a packing slip and shipping label PDF in parallel. Returns both PDF URLs in the webhook response.\n\n### Who is this for?\nE-commerce stores, warehouses, and fulfillment teams using Shopify, WooCommerce, or any platform that can send webhooks.\n\n### How it works\n1. Webhook receives order data (from Shopify, WooCommerce, or any platform)\n2. Code node formats order data for both documents\n3. TemplateFox generates packing slip + shipping label PDFs **in parallel**\n4. Results are combined and returned in the webhook response\n\n### How to set up (~5 min)\n1. Install the **TemplateFox** community node from Settings \u2192 Community Nodes\n2. Add your **TemplateFox API** credentials\n3. Select your packing slip and shipping label templates in the two TemplateFox node dropdowns\n4. Update your company/warehouse address in the \"Format Order Data\" code node\n5. Point your e-commerce platform's order webhook to the webhook URL\n\n### Requirements\n- TemplateFox API key \u2014 [get one free at app.templatefox.com](https://app.templatefox.com)\n- An e-commerce platform or system that can send order webhooks\n\n### How to customize\n- Edit the Code node to map your specific order payload fields\n- The workflow detects gift orders and adds \"GIFT\" handling notes automatically\n\n**Note:** This template uses the [TemplateFox community node](https://www.npmjs.com/package/n8n-nodes-templatefox). Install it from Settings \u2192 Community Nodes.",
+        "color": 3
+      },
+      "id": "c3d4e5f6-3333-4000-a000-000000000101",
+      "name": "Template Description",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -280,
+        -480
+      ],
+      "parameters_height": 640,
+      "parameters_width": 480
+    },
+    {
+      "parameters": {
+        "content": "### 1. Receive Order\nWebhook accepts POST requests with order JSON. See the description sticky for the expected payload format.",
+        "color": 0
+      },
+      "id": "c3d4e5f6-3333-4000-a000-000000000102",
+      "name": "Step 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -160
+      ],
+      "parameters_height": 100,
+      "parameters_width": 200
+    },
+    {
+      "parameters": {
+        "content": "### 2. Format Data\nSplits order into packing slip + shipping label data. Update your warehouse address here.",
+        "color": 0
+      },
+      "id": "c3d4e5f6-3333-4000-a000-000000000103",
+      "name": "Step 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        200,
+        -160
+      ],
+      "parameters_height": 100,
+      "parameters_width": 220
+    },
+    {
+      "parameters": {
+        "content": "### 3. Generate PDFs\nTwo TemplateFox nodes run in parallel \u2014 one for the packing slip, one for the shipping label.",
+        "color": 0
+      },
+      "id": "c3d4e5f6-3333-4000-a000-000000000104",
+      "name": "Step 3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        420,
+        -200
+      ],
+      "parameters_height": 100,
+      "parameters_width": 220
+    },
+    {
+      "parameters": {
+        "content": "### 4. Return Results\nCombines both PDF URLs and returns them in the webhook response.",
+        "color": 0
+      },
+      "id": "c3d4e5f6-3333-4000-a000-000000000105",
+      "name": "Step 4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -160
+      ],
+      "parameters_height": 100,
+      "parameters_width": 220
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "new-order",
+        "options": {
+          "responseMode": "responseNode"
+        }
+      },
+      "id": "c3d4e5f6-3333-4000-a000-000000000001",
+      "name": "Webhook - New Order",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "jsCode": "const order = $input.first().json.body || $input.first().json;\n\n// Build packing slip data\nconst packingSlipData = {\n  order_number: order.order_number || order.id,\n  date: order.date || new Date().toISOString().split('T')[0],\n  customer_name: order.shipping?.name || order.customer_name,\n  shipping_address: [\n    order.shipping?.address_1 || order.shipping_address,\n    order.shipping?.address_2,\n    [order.shipping?.city, order.shipping?.state, order.shipping?.zip].filter(Boolean).join(', '),\n    order.shipping?.country\n  ].filter(Boolean).join('\\n'),\n  items: (order.items || order.line_items || []).map(item => ({\n    name: item.name || item.title,\n    sku: item.sku || '',\n    quantity: item.quantity || 1,\n    notes: item.properties?.gift_message ? 'GIFT - Do not include price' : ''\n  })),\n  special_instructions: order.note || order.notes || '',\n  total_items: (order.items || order.line_items || []).reduce((sum, i) => sum + (i.quantity || 1), 0)\n};\n\n// Build shipping label data \u2014 UPDATE the from_name and from_address below!\nconst labelData = {\n  from_name: 'Your Company Name',\n  from_address: '123 Warehouse St\\nCity, ST 12345',\n  to_name: order.shipping?.name || order.customer_name,\n  to_address: [\n    order.shipping?.address_1 || order.shipping_address,\n    order.shipping?.address_2,\n    [order.shipping?.city, order.shipping?.state, order.shipping?.zip].filter(Boolean).join(', '),\n    order.shipping?.country\n  ].filter(Boolean).join('\\n'),\n  order_number: order.order_number || order.id,\n  weight: order.total_weight || '1.0 kg',\n  shipping_method: order.shipping_method || 'Standard'\n};\n\nreturn [{\n  json: {\n    packingSlipData,\n    labelData,\n    order_number: packingSlipData.order_number\n  }\n}];"
+      },
+      "id": "c3d4e5f6-3333-4000-a000-000000000002",
+      "name": "Format Order Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "generatePdf",
+        "templateId": "",
+        "dataInputMode": "json",
+        "jsonData": "={{ JSON.stringify($json.packingSlipData) }}",
+        "options": {
+          "filename": "={{ 'packing-slip-' + $json.order_number }}"
+        }
+      },
+      "id": "c3d4e5f6-3333-4000-a000-000000000003",
+      "name": "TemplateFox - Packing Slip",
+      "type": "n8n-nodes-templatefox.templateFox",
+      "typeVersion": 1,
+      "position": [
+        440,
+        -100
+      ],
+      "credentials": {
+        "templateFoxApi": {
+          "name": "TemplateFox API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "generatePdf",
+        "templateId": "",
+        "dataInputMode": "json",
+        "jsonData": "={{ JSON.stringify($('Format Order Data').item.json.labelData) }}",
+        "options": {
+          "filename": "={{ 'label-' + $('Format Order Data').item.json.order_number }}"
+        }
+      },
+      "id": "c3d4e5f6-3333-4000-a000-000000000004",
+      "name": "TemplateFox - Shipping Label",
+      "type": "n8n-nodes-templatefox.templateFox",
+      "typeVersion": 1,
+      "position": [
+        440,
+        100
+      ],
+      "credentials": {
+        "templateFoxApi": {
+          "name": "TemplateFox API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const packingSlip = $('TemplateFox - Packing Slip').first().json;\nconst shippingLabel = $('TemplateFox - Shipping Label').first().json;\nconst orderNumber = $('Format Order Data').first().json.order_number;\n\nreturn [{\n  json: {\n    order_number: orderNumber,\n    packing_slip_url: packingSlip.url,\n    packing_slip_filename: packingSlip.filename,\n    shipping_label_url: shippingLabel.url,\n    shipping_label_filename: shippingLabel.filename,\n    status: 'ready'\n  }\n}];"
+      },
+      "id": "c3d4e5f6-3333-4000-a000-000000000005",
+      "name": "Combine Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        },
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "c3d4e5f6-3333-4000-a000-000000000006",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - New Order": {
+      "main": [
+        [
+          {
+            "node": "Format Order Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Order Data": {
+      "main": [
+        [
+          {
+            "node": "TemplateFox - Packing Slip",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TemplateFox - Shipping Label",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TemplateFox - Packing Slip": {
+      "main": [
+        [
+          {
+            "node": "Combine Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TemplateFox - Shipping Label": {
+      "main": [
+        [
+          {
+            "node": "Combine Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Results": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "PDF"
+    },
+    {
+      "name": "E-commerce"
+    },
+    {
+      "name": "Shipping"
+    }
+  ],
+  "triggerCount": 1,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": ""
+  }
+}

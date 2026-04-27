@@ -8,7 +8,7 @@ import type {
 export class TemplateFoxApi implements ICredentialType {
 	name = 'templateFoxApi';
 	displayName = 'TemplateFox API';
-	documentationUrl = 'https://pdftemplateapi.com/docs';
+	documentationUrl = 'https://templatefox.com/docs';
 	properties: INodeProperties[] = [
 		{
 			displayName: 'API Key',
@@ -18,7 +18,7 @@ export class TemplateFoxApi implements ICredentialType {
 			default: '',
 			required: true,
 			description:
-				'Your TemplateFox API key. Get it from <a href="https://pdftemplateapi.com/dashboard/api" target="_blank">your dashboard</a>.',
+				'Your TemplateFox API key. Get it from <a href="https://templatefox.com/dashboard/api" target="_blank">your dashboard</a>.',
 		},
 	];
 
@@ -33,7 +33,7 @@ export class TemplateFoxApi implements ICredentialType {
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: 'https://api.pdftemplateapi.com',
+			baseURL: 'https://api.templatefox.com',
 			url: '/v1/account',
 			method: 'GET',
 		},

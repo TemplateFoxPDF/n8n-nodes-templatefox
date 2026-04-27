@@ -1,6 +1,6 @@
 # n8n-nodes-templatefox
 
-This is an n8n community node for [TemplateFox](https://pdftemplateapi.com) - a PDF generation API that lets you create professional PDFs from templates.
+This is an n8n community node for [TemplateFox](https://templatefox.com) - a PDF generation API that lets you create professional PDFs from templates.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
@@ -36,8 +36,8 @@ Generate a PDF document from a template with your data.
 
 To use this node, you need a TemplateFox API key:
 
-1. Sign up at [pdftemplateapi.com](https://pdftemplateapi.com)
-2. Go to your [API Dashboard](https://pdftemplateapi.com/dashboard/api)
+1. Sign up at [templatefox.com](https://templatefox.com)
+2. Go to your [API Dashboard](https://templatefox.com/dashboard/api)
 3. Copy your API key
 4. In n8n, create new **TemplateFox API** credentials and paste your key
 
@@ -78,13 +78,13 @@ The node returns:
 
 ## Resources
 
-- [TemplateFox Documentation](https://pdftemplateapi.com/docs)
+- [TemplateFox Documentation](https://templatefox.com/docs)
 - [n8n Community Nodes Documentation](https://docs.n8n.io/integrations/community-nodes/)
-- [TemplateFox API Reference](https://pdftemplateapi.com/docs/api)
+- [TemplateFox API Reference](https://templatefox.com/docs/api)
 
 ## Support
 
-- **TemplateFox Support**: support@pdftemplateapi.com
+- **TemplateFox Support**: support@templatefox.com
 - **GitHub Issues**: [Report bugs or request features](https://github.com/TemplateFoxPDF/n8n-nodes-templatefox/issues)
 
 ## License
