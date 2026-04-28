@@ -24,10 +24,18 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Update npm (requires >= 11.5.1 for OIDC)
-        # Pinned + --force to avoid intermittent self-upgrade corruption
-        # ("Cannot find module 'promise-retry'") seen on bundled npm 10.x → 11.x.
-        run: npm install -g --force npm@11.13.0 && npm --version
+      - name: Install npm 11.13.0 to user prefix (required for OIDC publish)
+        # Self-upgrading the bundled npm in place ("npm install -g npm@latest")
+        # crashes mid-install with "Cannot find module 'promise-retry'" because
+        # npm overwrites its own files while running. Install to a separate
+        # user-owned prefix and prepend it to PATH instead.
+        run: |
+          mkdir -p "$HOME/.npm-global"
+          npm install --prefix "$HOME/.npm-global" npm@11.13.0
+          echo "$HOME/.npm-global/node_modules/.bin" >> $GITHUB_PATH
+
+      - name: Verify npm version
+        run: npm --version
 
       - name: Install dependencies
         run: pnpm install
