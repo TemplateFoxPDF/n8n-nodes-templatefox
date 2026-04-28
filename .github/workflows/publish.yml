@@ -6,7 +6,7 @@ on:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: npm
     permissions:
       id-token: write
@@ -21,21 +21,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Install npm 11.13.0 to user prefix (required for OIDC publish)
-        # Self-upgrading the bundled npm in place ("npm install -g npm@latest")
-        # crashes mid-install with "Cannot find module 'promise-retry'" because
-        # npm overwrites its own files while running. Install to a separate
-        # user-owned prefix and prepend it to PATH instead.
-        run: |
-          mkdir -p "$HOME/.npm-global"
-          npm install --prefix "$HOME/.npm-global" npm@11.13.0
-          echo "$HOME/.npm-global/node_modules/.bin" >> $GITHUB_PATH
-
-      - name: Verify npm version
-        run: npm --version
 
       - name: Install dependencies
         run: pnpm install
