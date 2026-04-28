@@ -599,6 +599,7 @@ export class TemplateFox implements INodeType {
 			},
 
 			async getTemplateVersions(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				// Empty value = live draft (the default the API uses when no version is specified).
 				const draftOption: INodePropertyOptions = {
 					name: 'Draft (Live Editor)',
 					value: '',
@@ -624,7 +625,11 @@ export class TemplateFox implements INodeType {
 						value: v.tag || String(v.version_number),
 					}));
 					return [draftOption, ...tagged];
-				} catch {
+				} catch (error) {
+					this.logger.warn(
+						`TemplateFox: failed to load versions for template ${templateId}, falling back to draft-only list`,
+						{ error: (error as Error).message },
+					);
 					return [draftOption];
 				}
 			},

@@ -21,16 +21,35 @@ npm install n8n-nodes-templatefox
 
 ## Operations
 
-### Generate PDF
+### Generate PDF (sync)
 
-Generate a PDF document from a template with your data.
+Generate a PDF from a template with your data — the main operation. Returns a signed URL or a binary file.
 
 **Features:**
-- **Template Dropdown**: Select from your saved templates
-- **Dynamic Fields**: Fields automatically appear based on the selected template
-- **JSON Mode**: For advanced users who prefer raw JSON input
-- **Custom Filename**: Set a custom filename for the generated PDF
-- **URL Expiration**: Configure how long the PDF URL remains valid
+- **Template dropdown** — pick from your saved templates
+- **Template version dropdown** — pin to a tagged version, or use the live draft
+- **Dynamic fields** — auto-populated from the selected template
+- **JSON mode** — raw JSON input for arrays and nested data
+- **PDF/A variant** — generate `pdf/a-1b`, `pdf/a-2b`, or `pdf/a-3b` archival PDFs
+- **Custom filename / URL expiration / S3 upload** options
+
+### Generate PDF (Async)
+
+Same inputs as Generate PDF, but queues a job and returns a `job_id` immediately. Best for large documents, batches, or when you don't want to hold an HTTP connection open. Pair with **Get PDF Job** (or a webhook) to retrieve the result.
+
+### PDF tools (no template needed)
+
+- **Merge PDFs** — concatenate 2+ PDFs (URL or base64) into a single document
+- **Extract PDF Pages** — pull selected pages using a `1-3, 5, 7-9` syntax
+- **Rotate PDF** — rotate every page by a single angle, or apply a per-page rotation map
+
+### Read-only operations
+
+- **Get PDF Job** — look up an async job by ID
+- **List PDF Jobs** — list recent jobs, optionally filtered by status
+- **Get Account** — returns remaining credits and account email
+
+The node is also `usableAsTool: true`, so any of these operations can be exposed to an n8n AI Agent.
 
 ## Credentials
 
